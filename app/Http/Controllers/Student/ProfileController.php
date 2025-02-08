@@ -9,23 +9,6 @@ use Illuminate\Validation\Rule;
 
 class ProfileController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('student');
-    }
-
-    public function dashboard()
-    {
-        $activities = auth()->user()
-            ->section
-            ->classworkActivities()
-            ->with(['creator', 'section.course'])
-            ->latest()
-            ->paginate(10);
-
-        return view('student.dashboard', compact('activities'));
-    }
-
     public function edit()
     {
         return view('student.profile.edit', [
@@ -37,7 +20,9 @@ class ProfileController extends Controller
     {
         $user = auth()->user();
 
+        // Students can update username, email, contact number, and password
         $validated = $request->validate([
+            'username' => ['required', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'contact_number' => ['nullable', 'string', 'max:20'],
             'current_password' => ['required_with:password', 'nullable', 'string'],

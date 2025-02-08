@@ -14,7 +14,7 @@ class UserController extends Controller
 {
     public function index()
     {
-        $users = User::where('role', '!=', 'admin')
+        $users = User::where('role', '!=', User::ROLE_ADMIN)
             ->with(['course', 'section'])
             ->latest()
             ->paginate(10);
@@ -25,59 +25,235 @@ class UserController extends Controller
     public function create()
     {
         $courses = Course::all();
-        $sections = Section::all();
-        return view('admin.users.create', compact('courses', 'sections'));
+        $sections = Section::with('course')->get();
+        $years = [
+            User::YEAR_FIRST => '1st Year',
+            User::YEAR_SECOND => '2nd Year',
+            User::YEAR_THIRD => '3rd Year',
+            User::YEAR_FOURTH => '4th Year',
+        ];
+        
+        return view('admin.users.create', compact('courses', 'sections', 'years'));
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        // Common validation rules
+        $rules = [
             'name' => ['required', 'string', 'max:255'],
+            'username' => ['required', 'string', 'max:255', 'unique:users'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8'],
-            'role' => ['required', Rule::in(['secretary', 'student'])],
-            'course_id' => ['required', 'exists:courses,id'],
-            'section_id' => ['required', 'exists:sections,id'],
-            'student_id' => ['required_if:role,student', 'nullable', 'string', 'unique:users,student_id'],
+            'role' => ['required', Rule::in([User::ROLE_SECRETARY, User::ROLE_STUDENT])],
             'contact_number' => ['nullable', 'string', 'max:20'],
-        ]);
+        ];
 
+        // Role-specific validation rules
+        if ($request->input('role') === User::ROLE_STUDENT) {
+            $rules = array_merge($rules, [
+                'student_id' => ['required', 'string', 'unique:users,student_id'],
+                'year' => [
+                    'required',
+                    'integer',
+                    Rule::in([
+                        User::YEAR_FIRST,
+                        User::YEAR_SECOND,
+                        User::YEAR_THIRD,
+                        User::YEAR_FOURTH,
+                    ]),
+                ],
+                'course_id' => [
+                    'required',
+                    'exists:courses,id',
+                ],
+                'section_id' => [
+                    'required',
+                    'string',
+                    Rule::in(['A', 'B', 'C', 'D', 'E', 'F']),
+                ],
+            ]);
+        } elseif ($request->input('role') === User::ROLE_SECRETARY) {
+            $rules = array_merge($rules, [
+                'student_id' => ['required', 'string', 'unique:users,student_id'],
+                'course_id' => [
+                    'required',
+                    'exists:courses,id',
+                ],
+                'year' => [
+                    'required',
+                    'integer',
+                    Rule::in([
+                        User::YEAR_FIRST,
+                        User::YEAR_SECOND,
+                        User::YEAR_THIRD,
+                        User::YEAR_FOURTH,
+                    ]),
+                ],
+                'section_id' => [
+                    'required',
+                    'string',
+                    Rule::in(['A', 'B', 'C', 'D', 'E', 'F']),
+                ],
+            ]);
+        }
+
+        $validated = $request->validate($rules);
         $validated['password'] = Hash::make($validated['password']);
 
-        User::create($validated);
+        // Verify and get or create section
+        try {
+            // Check if section exists for this course and year
+            $section = Section::where([
+                'name' => $validated['section_id'],
+                'year_level' => $validated['year'],
+                'course_id' => $validated['course_id']
+            ])->first();
 
-        return redirect()->route('admin.users.index')
-            ->with('success', 'User created successfully.');
+            if (!$section) {
+                // Create new section if it doesn't exist
+                $section = Section::create([
+                    'name' => $validated['section_id'],
+                    'year_level' => $validated['year'],
+                    'course_id' => $validated['course_id']
+                ]);
+            }
+
+            // Replace section_id with actual section id
+            $validated['section_id'] = $section->id;
+
+            $user = User::create($validated);
+
+            return redirect()->route('admin.users.index')
+                ->with('success', 'User created successfully.');
+
+        } catch (\Exception $e) {
+            return back()
+                ->withInput()
+                ->withErrors(['error' => 'Failed to create user. Please check if the course and section combination is valid.']);
+        }
     }
 
     public function edit(User $user)
     {
         $courses = Course::all();
-        $sections = Section::all();
-        return view('admin.users.edit', compact('user', 'courses', 'sections'));
+        $years = [
+            User::YEAR_FIRST => '1st Year',
+            User::YEAR_SECOND => '2nd Year',
+            User::YEAR_THIRD => '3rd Year',
+            User::YEAR_FOURTH => '4th Year',
+        ];
+        
+        return view('admin.users.edit', compact('user', 'courses', 'years'));
     }
 
     public function update(Request $request, User $user)
     {
-        $validated = $request->validate([
+        // Common validation rules
+        $rules = [
             'name' => ['required', 'string', 'max:255'],
+            'username' => ['required', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'password' => ['nullable', 'string', 'min:8'],
-            'course_id' => ['required', 'exists:courses,id'],
-            'section_id' => ['required', 'exists:sections,id'],
             'contact_number' => ['nullable', 'string', 'max:20'],
-        ]);
+        ];
 
+        // Role-specific validation rules
+        if ($user->role === User::ROLE_STUDENT) {
+            $rules = array_merge($rules, [
+                'student_id' => [
+                    'required',
+                    'string',
+                    Rule::unique('users')->ignore($user->id),
+                ],
+                'year' => [
+                    'required',
+                    'integer',
+                    Rule::in([
+                        User::YEAR_FIRST,
+                        User::YEAR_SECOND,
+                        User::YEAR_THIRD,
+                        User::YEAR_FOURTH,
+                    ]),
+                ],
+                'course_id' => [
+                    'required',
+                    'exists:courses,id',
+                ],
+                'section_id' => [
+                    'required',
+                    'string',
+                    Rule::in(['A', 'B', 'C', 'D', 'E', 'F']),
+                ],
+            ]);
+        } elseif ($user->role === User::ROLE_SECRETARY) {
+            $rules = array_merge($rules, [
+                'student_id' => [
+                    'required',
+                    'string',
+                    Rule::unique('users')->ignore($user->id),
+                ],
+                'course_id' => [
+                    'required',
+                    'exists:courses,id',
+                ],
+                'year' => [
+                    'required',
+                    'integer',
+                    Rule::in([
+                        User::YEAR_FIRST,
+                        User::YEAR_SECOND,
+                        User::YEAR_THIRD,
+                        User::YEAR_FOURTH,
+                    ]),
+                ],
+                'section_id' => [
+                    'required',
+                    'string',
+                    Rule::in(['A', 'B', 'C', 'D', 'E', 'F']),
+                ],
+            ]);
+        }
+
+        $validated = $request->validate($rules);
+
+        // Handle password update
         if (isset($validated['password'])) {
             $validated['password'] = Hash::make($validated['password']);
         } else {
             unset($validated['password']);
         }
 
-        $user->update($validated);
+        // Verify and get or create section
+        try {
+            // Check if section exists for this course and year
+            $section = Section::where([
+                'name' => $validated['section_id'],
+                'year_level' => $validated['year'],
+                'course_id' => $validated['course_id']
+            ])->first();
 
-        return redirect()->route('admin.users.index')
-            ->with('success', 'User updated successfully.');
+            if (!$section) {
+                // Create new section if it doesn't exist
+                $section = Section::create([
+                    'name' => $validated['section_id'],
+                    'year_level' => $validated['year'],
+                    'course_id' => $validated['course_id']
+                ]);
+            }
+
+            // Replace section_id with actual section id
+            $validated['section_id'] = $section->id;
+
+            $user->update($validated);
+
+            return redirect()->route('admin.users.index')
+                ->with('success', 'User updated successfully.');
+
+        } catch (\Exception $e) {
+            return back()
+                ->withInput()
+                ->withErrors(['error' => 'Failed to update user. Please check if the course and section combination is valid.']);
+        }
     }
 
     public function destroy(User $user)

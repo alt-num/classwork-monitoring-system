@@ -15,9 +15,10 @@ return new class extends Migration
             $table->id();
             $table->string('title');
             $table->text('description');
-            $table->date('due_date');
+            $table->dateTime('due_date');
+            $table->foreignId('course_id')->constrained()->onDelete('cascade');
             $table->foreignId('section_id')->constrained()->onDelete('cascade');
-            $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
+            $table->foreignId('secretary_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
         });
     }

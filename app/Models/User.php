@@ -16,6 +16,11 @@ class User extends Authenticatable
     const ROLE_SECRETARY = 'secretary';
     const ROLE_STUDENT = 'student';
 
+    const YEAR_FIRST = 1;
+    const YEAR_SECOND = 2;
+    const YEAR_THIRD = 3;
+    const YEAR_FOURTH = 4;
+
     /**
      * The attributes that are mass assignable.
      *
@@ -28,6 +33,7 @@ class User extends Authenticatable
         'password',
         'role',
         'student_id',
+        'year',
         'contact_number',
         'course_id',
         'section_id',
@@ -51,7 +57,14 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'year' => 'integer',
     ];
+
+    // Add username as the authentication field
+    public function username()
+    {
+        return 'username';
+    }
 
     public function course()
     {
@@ -65,7 +78,7 @@ class User extends Authenticatable
 
     public function activities()
     {
-        return $this->hasMany(ClassworkActivity::class, 'secretary_id');
+        return $this->hasMany(ClassworkActivity::class, 'created_by');
     }
 
     public function attendanceRecords()
@@ -86,5 +99,16 @@ class User extends Authenticatable
     public function isStudent()
     {
         return $this->role === self::ROLE_STUDENT;
+    }
+
+    public function getYearLevelAttribute()
+    {
+        return match($this->year) {
+            self::YEAR_FIRST => '1st Year',
+            self::YEAR_SECOND => '2nd Year',
+            self::YEAR_THIRD => '3rd Year',
+            self::YEAR_FOURTH => '4th Year',
+            default => 'N/A'
+        };
     }
 }

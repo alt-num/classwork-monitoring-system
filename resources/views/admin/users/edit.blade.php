@@ -22,6 +22,26 @@
                 @enderror
             </div>
 
+            <!-- Student ID -->
+            <div class="mb-4">
+                <label for="student_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Student ID</label>
+                <input type="text" name="student_id" id="student_id" value="{{ old('student_id', $user->student_id) }}" required
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600">
+                @error('student_id')
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <!-- Username -->
+            <div class="mb-4">
+                <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Username</label>
+                <input type="text" name="username" id="username" value="{{ old('username', $user->username) }}" required
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600">
+                @error('username')
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                @enderror
+            </div>
+
             <!-- Email -->
             <div class="mb-4">
                 <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
@@ -40,6 +60,23 @@
                 <input type="password" name="password" id="password"
                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600">
                 @error('password')
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <!-- Year Level -->
+            <div class="mb-4">
+                <label for="year" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Year Level</label>
+                <select name="year" id="year" required
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600">
+                    <option value="">Select Year Level</option>
+                    @foreach($years as $value => $label)
+                        <option value="{{ $value }}" {{ old('year', $user->year) == $value ? 'selected' : '' }}>
+                            {{ $label }}
+                        </option>
+                    @endforeach
+                </select>
+                @error('year')
                     <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                 @enderror
             </div>
@@ -67,9 +104,9 @@
                 <select name="section_id" id="section_id" required
                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600">
                     <option value="">Select Section</option>
-                    @foreach($sections as $section)
-                        <option value="{{ $section->id }}" {{ old('section_id', $user->section_id) == $section->id ? 'selected' : '' }}>
-                            {{ $section->name }}
+                    @foreach(['A', 'B', 'C', 'D', 'E', 'F'] as $sectionName)
+                        <option value="{{ $sectionName }}" {{ old('section_id', $user->section->name) == $sectionName ? 'selected' : '' }}>
+                            Section {{ $sectionName }}
                         </option>
                     @endforeach
                 </select>

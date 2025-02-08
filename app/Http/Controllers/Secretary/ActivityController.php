@@ -4,15 +4,12 @@ namespace App\Http\Controllers\Secretary;
 
 use App\Http\Controllers\Controller;
 use App\Models\ClassworkActivity;
+use App\Models\Course;
+use App\Models\Section;
 use Illuminate\Http\Request;
 
 class ActivityController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('secretary');
-    }
-
     public function index()
     {
         $activities = ClassworkActivity::where('secretary_id', auth()->id())
@@ -25,8 +22,9 @@ class ActivityController extends Controller
 
     public function create()
     {
-        $courses = auth()->user()->courses;
-        $sections = auth()->user()->sections;
+        $user = auth()->user();
+        $courses = Course::where('id', $user->course_id)->get();
+        $sections = Section::where('id', $user->section_id)->get();
         return view('secretary.activities.create', compact('courses', 'sections'));
     }
 

@@ -12,6 +12,7 @@ use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\SecretaryMiddleware;
 use App\Http\Middleware\StudentMiddleware;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Secretary\AttendanceController;
 
 // Public routes
 Route::get('/', function () {
@@ -49,6 +50,10 @@ Route::middleware('auth')->group(function () {
     Route::middleware(SecretaryMiddleware::class)->prefix('secretary')->name('secretary.')->group(function () {
         Route::get('/dashboard', [SecretaryDashboardController::class, 'index'])->name('dashboard');
         Route::resource('activities', ActivityController::class);
+        
+        // Attendance routes
+        Route::get('/attendance/record', [AttendanceController::class, 'create'])->name('attendance.record');
+        Route::post('/attendance/store', [AttendanceController::class, 'store'])->name('attendance.store');
     });
 
     // Student routes

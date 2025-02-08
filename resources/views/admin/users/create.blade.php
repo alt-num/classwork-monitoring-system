@@ -11,12 +11,32 @@
         <form method="POST" action="{{ route('admin.users.store') }}" class="max-w-2xl">
             @csrf
 
+            <!-- Student ID -->
+            <div class="mb-4">
+                <label for="student_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Student ID *</label>
+                <input type="text" name="student_id" id="student_id" value="{{ old('student_id') }}" required
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600">
+                @error('student_id')
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                @enderror
+            </div>
+
             <!-- Name -->
             <div class="mb-4">
                 <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
                 <input type="text" name="name" id="name" value="{{ old('name') }}" required
                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600">
                 @error('name')
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <!-- Username -->
+            <div class="mb-4">
+                <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Username</label>
+                <input type="text" name="username" id="username" value="{{ old('username') }}" required
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600">
+                @error('username')
                     <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                 @enderror
             </div>
@@ -47,20 +67,10 @@
                 <select name="role" id="role" required
                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600">
                     <option value="">Select Role</option>
-                    <option value="secretary" {{ old('role') === 'secretary' ? 'selected' : '' }}>Secretary</option>
-                    <option value="student" {{ old('role') === 'student' ? 'selected' : '' }}>Student</option>
+                    <option value="{{ App\Models\User::ROLE_SECRETARY }}" {{ old('role') === App\Models\User::ROLE_SECRETARY ? 'selected' : '' }}>Secretary</option>
+                    <option value="{{ App\Models\User::ROLE_STUDENT }}" {{ old('role') === App\Models\User::ROLE_STUDENT ? 'selected' : '' }}>Student</option>
                 </select>
                 @error('role')
-                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <!-- Student ID (shown only for student role) -->
-            <div class="mb-4 hidden" id="studentIdField">
-                <label for="student_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Student ID</label>
-                <input type="text" name="student_id" id="student_id" value="{{ old('student_id') }}"
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600">
-                @error('student_id')
                     <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                 @enderror
             </div>
@@ -82,15 +92,32 @@
                 @enderror
             </div>
 
+            <!-- Year Level -->
+            <div class="mb-4">
+                <label for="year" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Year Level *</label>
+                <select name="year" id="year" required
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600">
+                    <option value="">Select Year Level</option>
+                    @foreach($years as $value => $label)
+                        <option value="{{ $value }}" {{ old('year') == $value ? 'selected' : '' }}>
+                            {{ $label }}
+                        </option>
+                    @endforeach
+                </select>
+                @error('year')
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                @enderror
+            </div>
+
             <!-- Section -->
             <div class="mb-4">
                 <label for="section_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Section</label>
                 <select name="section_id" id="section_id" required
                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600">
                     <option value="">Select Section</option>
-                    @foreach($sections as $section)
-                        <option value="{{ $section->id }}" {{ old('section_id') == $section->id ? 'selected' : '' }}>
-                            {{ $section->name }}
+                    @foreach(['A', 'B', 'C', 'D', 'E', 'F'] as $sectionName)
+                        <option value="{{ $sectionName }}" {{ old('section_id') == $sectionName ? 'selected' : '' }}>
+                            Section {{ $sectionName }}
                         </option>
                     @endforeach
                 </select>
@@ -121,24 +148,8 @@
 
 @push('scripts')
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const roleSelect = document.getElementById('role');
-        const studentIdField = document.getElementById('studentIdField');
-        const studentIdInput = document.getElementById('student_id');
-
-        function toggleStudentId() {
-            if (roleSelect.value === 'student') {
-                studentIdField.classList.remove('hidden');
-                studentIdInput.required = true;
-            } else {
-                studentIdField.classList.add('hidden');
-                studentIdInput.required = false;
-            }
-        }
-
-        roleSelect.addEventListener('change', toggleStudentId);
-        toggleStudentId(); // Run on initial load
-    });
+// No JavaScript needed anymore since sections are fixed A-F
 </script>
 @endpush
-@endsection 
+
+@endsection

@@ -12,7 +12,7 @@ class Section extends Model
     protected $fillable = [
         'name',
         'year_level',
-        'course_id',
+        'course_id'
     ];
 
     // Relationships
@@ -29,5 +29,15 @@ class Section extends Model
     public function activities()
     {
         return $this->hasMany(ClassworkActivity::class);
+    }
+
+    public function secretaries()
+    {
+        return $this->hasMany(User::class)->where('role', User::ROLE_SECRETARY);
+    }
+
+    public function students()
+    {
+        return $this->hasMany(User::class)->where('role', User::ROLE_STUDENT);
     }
 }
