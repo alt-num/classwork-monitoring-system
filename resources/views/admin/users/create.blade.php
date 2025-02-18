@@ -16,6 +16,9 @@
                 <label for="student_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Student ID *</label>
                 <input type="text" name="student_id" id="student_id" value="{{ old('student_id') }}" required
                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600">
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    Username and password will be automatically generated from the Student ID.
+                </p>
                 @error('student_id')
                     <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                 @enderror
@@ -31,46 +34,12 @@
                 @enderror
             </div>
 
-            <!-- Username -->
-            <div class="mb-4">
-                <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Username</label>
-                <input type="text" name="username" id="username" value="{{ old('username') }}" required
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600">
-                @error('username')
-                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-                @enderror
-            </div>
-
             <!-- Email -->
             <div class="mb-4">
                 <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
                 <input type="email" name="email" id="email" value="{{ old('email') }}" required
                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600">
                 @error('email')
-                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <!-- Password -->
-            <div class="mb-4">
-                <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
-                <input type="password" name="password" id="password" required
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600">
-                @error('password')
-                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <!-- Role -->
-            <div class="mb-4">
-                <label for="role" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Role</label>
-                <select name="role" id="role" required
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600">
-                    <option value="">Select Role</option>
-                    <option value="{{ App\Models\User::ROLE_SECRETARY }}" {{ old('role') === App\Models\User::ROLE_SECRETARY ? 'selected' : '' }}>Secretary</option>
-                    <option value="{{ App\Models\User::ROLE_STUDENT }}" {{ old('role') === App\Models\User::ROLE_STUDENT ? 'selected' : '' }}>Student</option>
-                </select>
-                @error('role')
                     <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                 @enderror
             </div>

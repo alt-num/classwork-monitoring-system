@@ -37,6 +37,21 @@
                 </div>
             </div>
         </div>
+
+        <!-- Fines Summary -->
+        <div class="mb-8">
+            <h3 class="text-xl font-semibold mb-4">Fines Summary</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-white dark:bg-gray-700 rounded-lg p-4 shadow">
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Total Unpaid Fines</p>
+                    <p class="text-2xl font-bold text-red-600 dark:text-red-400">₱{{ number_format($totalUnpaidFines, 2) }}</p>
+                </div>
+                <div class="bg-white dark:bg-gray-700 rounded-lg p-4 shadow">
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Total Paid Fines</p>
+                    <p class="text-2xl font-bold text-green-600 dark:text-green-400">₱{{ number_format($totalPaidFines, 2) }}</p>
+                </div>
+            </div>
+        </div>
         
         <div class="mb-8">
             <h3 class="text-xl font-semibold mb-4">Recent Activities</h3>
@@ -66,12 +81,25 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     @php
-                                        $status = $activity->due_date->isPast() ? 'Overdue' : 'Pending';
-                                        $statusColor = $activity->due_date->isPast() ? 'red' : 'yellow';
+                                        $attendanceRecord = $activity->attendanceRecords->where('student_id', $student->id)->first();
+                                        $status = $attendanceRecord ? ucfirst($attendanceRecord->status) : ($activity->due_date->isPast() ? 'Overdue' : 'Pending');
+                                        $statusColor = match($status) {
+                                            'Present' => 'green',
+                                            'Late' => 'yellow',
+                                            'Absent' => 'red',
+                                            'Overdue' => 'red',
+                                            default => 'yellow'
+                                        };
                                     @endphp
                                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-{{ $statusColor }}-100 text-{{ $statusColor }}-800 dark:bg-{{ $statusColor }}-900 dark:text-{{ $statusColor }}-200">
                                         {{ $status }}
                                     </span>
+                                    @if($attendanceRecord && $attendanceRecord->fine)
+                                        <div class="text-sm text-red-600 dark:text-red-400 mt-1">
+                                            Fine: ₱{{ number_format($attendanceRecord->fine->amount, 2) }}
+                                            ({{ $attendanceRecord->fine->is_paid ? 'Paid' : 'Unpaid' }})
+                                        </div>
+                                    @endif
                                 </td>
                             </tr>
                         @empty

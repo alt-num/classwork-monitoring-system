@@ -31,7 +31,7 @@
                 </label>
 
                 <input id="password" type="password" name="password" required
-                    class="block mt-1 w-full rounded-md shadow-sm border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                    class="block mt-1 w-full rounded-md shadow-sm border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-blue-500 focus:ring-blue-500 [color-scheme:dark]">
 
                 @error('password')
                     <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>

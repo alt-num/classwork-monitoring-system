@@ -23,9 +23,10 @@ class ActivityController extends Controller
     public function create()
     {
         $user = auth()->user();
-        $courses = Course::where('id', $user->course_id)->get();
-        $sections = Section::where('id', $user->section_id)->get();
-        return view('secretary.activities.create', compact('courses', 'sections'));
+        return view('secretary.activities.create', [
+            'course' => $user->course,
+            'section' => $user->section,
+        ]);
     }
 
     public function store(Request $request)
@@ -34,11 +35,12 @@ class ActivityController extends Controller
             'title' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string'],
             'due_date' => ['required', 'date', 'after:today'],
-            'course_id' => ['required', 'exists:courses,id'],
-            'section_id' => ['required', 'exists:sections,id'],
         ]);
 
-        $validated['secretary_id'] = auth()->id();
+        $user = auth()->user();
+        $validated['secretary_id'] = $user->id;
+        $validated['course_id'] = $user->course_id;
+        $validated['section_id'] = $user->section_id;
 
         ClassworkActivity::create($validated);
 
@@ -48,23 +50,29 @@ class ActivityController extends Controller
 
     public function edit(ClassworkActivity $activity)
     {
-        $this->authorize('update', $activity);
-        
-        $courses = auth()->user()->courses;
-        $sections = auth()->user()->sections;
-        return view('secretary.activities.edit', compact('activity', 'courses', 'sections'));
+        // Check if the activity belongs to the current secretary
+        if ($activity->secretary_id !== auth()->id()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        return view('secretary.activities.edit', [
+            'activity' => $activity,
+            'course' => auth()->user()->course,
+            'section' => auth()->user()->section,
+        ]);
     }
 
     public function update(Request $request, ClassworkActivity $activity)
     {
-        $this->authorize('update', $activity);
+        // Check if the activity belongs to the current secretary
+        if ($activity->secretary_id !== auth()->id()) {
+            abort(403, 'Unauthorized action.');
+        }
 
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string'],
             'due_date' => ['required', 'date', 'after:today'],
-            'course_id' => ['required', 'exists:courses,id'],
-            'section_id' => ['required', 'exists:sections,id'],
         ]);
 
         $activity->update($validated);
@@ -75,7 +83,10 @@ class ActivityController extends Controller
 
     public function destroy(ClassworkActivity $activity)
     {
-        $this->authorize('delete', $activity);
+        // Check if the activity belongs to the current secretary
+        if ($activity->secretary_id !== auth()->id()) {
+            abort(403, 'Unauthorized action.');
+        }
 
         $activity->delete();
 

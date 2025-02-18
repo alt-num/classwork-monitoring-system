@@ -10,12 +10,11 @@ class AttendanceRecord extends Model
     use HasFactory;
 
     protected $fillable = [
-        'date',
+        'student_id',
+        'classwork_activity_id',
         'status',
         'remarks',
-        'student_id',
-        'course_id',
-        'section_id',
+        'recorded_by'
     ];
 
     protected $casts = [
@@ -28,13 +27,13 @@ class AttendanceRecord extends Model
         return $this->belongsTo(User::class, 'student_id');
     }
 
-    public function course()
+    public function classworkActivity()
     {
-        return $this->belongsTo(Course::class);
+        return $this->belongsTo(ClassworkActivity::class);
     }
 
-    public function section()
+    public function fine()
     {
-        return $this->belongsTo(Section::class);
+        return $this->hasOne(Fine::class);
     }
 }

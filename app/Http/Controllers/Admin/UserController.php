@@ -12,12 +12,23 @@ use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::where('role', '!=', User::ROLE_ADMIN)
-            ->with(['course', 'section'])
-            ->latest()
-            ->paginate(10);
+        $query = User::where('role', '!=', User::ROLE_ADMIN)
+            ->with(['course', 'section']);
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('student_id', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        $users = $query->latest()
+            ->paginate(10)
+            ->withQueryString();
 
         return view('admin.users.index', compact('users'));
     }
@@ -41,66 +52,37 @@ class UserController extends Controller
         // Common validation rules
         $rules = [
             'name' => ['required', 'string', 'max:255'],
-            'username' => ['required', 'string', 'max:255', 'unique:users'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'string', 'min:8'],
-            'role' => ['required', Rule::in([User::ROLE_SECRETARY, User::ROLE_STUDENT])],
+            'student_id' => ['required', 'string', 'unique:users,student_id'],
+            'year' => [
+                'required',
+                'integer',
+                Rule::in([
+                    User::YEAR_FIRST,
+                    User::YEAR_SECOND,
+                    User::YEAR_THIRD,
+                    User::YEAR_FOURTH,
+                ]),
+            ],
+            'course_id' => [
+                'required',
+                'exists:courses,id',
+            ],
+            'section_id' => [
+                'required',
+                'string',
+                Rule::in(['A', 'B', 'C', 'D', 'E', 'F']),
+            ],
             'contact_number' => ['nullable', 'string', 'max:20'],
         ];
 
-        // Role-specific validation rules
-        if ($request->input('role') === User::ROLE_STUDENT) {
-            $rules = array_merge($rules, [
-                'student_id' => ['required', 'string', 'unique:users,student_id'],
-                'year' => [
-                    'required',
-                    'integer',
-                    Rule::in([
-                        User::YEAR_FIRST,
-                        User::YEAR_SECOND,
-                        User::YEAR_THIRD,
-                        User::YEAR_FOURTH,
-                    ]),
-                ],
-                'course_id' => [
-                    'required',
-                    'exists:courses,id',
-                ],
-                'section_id' => [
-                    'required',
-                    'string',
-                    Rule::in(['A', 'B', 'C', 'D', 'E', 'F']),
-                ],
-            ]);
-        } elseif ($request->input('role') === User::ROLE_SECRETARY) {
-            $rules = array_merge($rules, [
-                'student_id' => ['required', 'string', 'unique:users,student_id'],
-                'course_id' => [
-                    'required',
-                    'exists:courses,id',
-                ],
-                'year' => [
-                    'required',
-                    'integer',
-                    Rule::in([
-                        User::YEAR_FIRST,
-                        User::YEAR_SECOND,
-                        User::YEAR_THIRD,
-                        User::YEAR_FOURTH,
-                    ]),
-                ],
-                'section_id' => [
-                    'required',
-                    'string',
-                    Rule::in(['A', 'B', 'C', 'D', 'E', 'F']),
-                ],
-            ]);
-        }
-
         $validated = $request->validate($rules);
-        $validated['password'] = Hash::make($validated['password']);
 
-        // Verify and get or create section
+        // Generate username and password from student ID
+        $validated['username'] = User::generateUsername($validated['student_id']);
+        $validated['password'] = Hash::make(User::generatePassword($validated['student_id']));
+        $validated['role'] = User::ROLE_STUDENT; // Default role is student
+
         try {
             // Check if section exists for this course and year
             $section = Section::where([
@@ -151,79 +133,29 @@ class UserController extends Controller
         // Common validation rules
         $rules = [
             'name' => ['required', 'string', 'max:255'],
-            'username' => ['required', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'password' => ['nullable', 'string', 'min:8'],
+            'student_id' => ['required', 'string', Rule::unique('users')->ignore($user->id)],
+            'year' => [
+                'required',
+                'integer',
+                Rule::in([
+                    User::YEAR_FIRST,
+                    User::YEAR_SECOND,
+                    User::YEAR_THIRD,
+                    User::YEAR_FOURTH,
+                ]),
+            ],
+            'course_id' => ['required', 'exists:courses,id'],
+            'section_id' => [
+                'required',
+                'string',
+                Rule::in(['A', 'B', 'C', 'D', 'E', 'F']),
+            ],
             'contact_number' => ['nullable', 'string', 'max:20'],
         ];
 
-        // Role-specific validation rules
-        if ($user->role === User::ROLE_STUDENT) {
-            $rules = array_merge($rules, [
-                'student_id' => [
-                    'required',
-                    'string',
-                    Rule::unique('users')->ignore($user->id),
-                ],
-                'year' => [
-                    'required',
-                    'integer',
-                    Rule::in([
-                        User::YEAR_FIRST,
-                        User::YEAR_SECOND,
-                        User::YEAR_THIRD,
-                        User::YEAR_FOURTH,
-                    ]),
-                ],
-                'course_id' => [
-                    'required',
-                    'exists:courses,id',
-                ],
-                'section_id' => [
-                    'required',
-                    'string',
-                    Rule::in(['A', 'B', 'C', 'D', 'E', 'F']),
-                ],
-            ]);
-        } elseif ($user->role === User::ROLE_SECRETARY) {
-            $rules = array_merge($rules, [
-                'student_id' => [
-                    'required',
-                    'string',
-                    Rule::unique('users')->ignore($user->id),
-                ],
-                'course_id' => [
-                    'required',
-                    'exists:courses,id',
-                ],
-                'year' => [
-                    'required',
-                    'integer',
-                    Rule::in([
-                        User::YEAR_FIRST,
-                        User::YEAR_SECOND,
-                        User::YEAR_THIRD,
-                        User::YEAR_FOURTH,
-                    ]),
-                ],
-                'section_id' => [
-                    'required',
-                    'string',
-                    Rule::in(['A', 'B', 'C', 'D', 'E', 'F']),
-                ],
-            ]);
-        }
-
         $validated = $request->validate($rules);
 
-        // Handle password update
-        if (isset($validated['password'])) {
-            $validated['password'] = Hash::make($validated['password']);
-        } else {
-            unset($validated['password']);
-        }
-
-        // Verify and get or create section
         try {
             // Check if section exists for this course and year
             $section = Section::where([
@@ -262,5 +194,21 @@ class UserController extends Controller
 
         return redirect()->route('admin.users.index')
             ->with('success', 'User deleted successfully.');
+    }
+
+    public function toggleRole(User $user)
+    {
+        $user->toggleSecretaryRole();
+        
+        return redirect()->route('admin.users.index')
+            ->with('success', 'User role updated successfully.');
+    }
+
+    public function resetCredentials(User $user)
+    {
+        $user->resetCredentials();
+        
+        return redirect()->route('admin.users.index')
+            ->with('success', 'User credentials reset successfully.');
     }
 }

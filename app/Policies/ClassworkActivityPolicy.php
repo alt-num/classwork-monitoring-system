@@ -26,7 +26,7 @@ class ClassworkActivityPolicy
         }
 
         if ($user->isSecretary()) {
-            return $classworkActivity->created_by === $user->id;
+            return $classworkActivity->secretary_id === $user->id;
         }
 
         if ($user->isStudent()) {
@@ -49,7 +49,7 @@ class ClassworkActivityPolicy
      */
     public function update(User $user, ClassworkActivity $classworkActivity): bool
     {
-        return $user->isSecretary() && $classworkActivity->created_by === $user->id;
+        return $user->isSecretary() && $classworkActivity->secretary_id === $user->id;
     }
 
     /**
@@ -57,7 +57,7 @@ class ClassworkActivityPolicy
      */
     public function delete(User $user, ClassworkActivity $classworkActivity): bool
     {
-        return $user->isSecretary() && $classworkActivity->created_by === $user->id;
+        return $user->isSecretary() && $classworkActivity->secretary_id === $user->id;
     }
 
     /**

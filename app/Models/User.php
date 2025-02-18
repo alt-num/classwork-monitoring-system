@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Support\Facades\Hash;
 
 class User extends Authenticatable
 {
@@ -59,6 +60,35 @@ class User extends Authenticatable
         'password' => 'hashed',
         'year' => 'integer',
     ];
+
+    // Generate default username from student ID
+    public static function generateUsername(string $studentId): string
+    {
+        return 'bc-' . $studentId;
+    }
+
+    // Generate default password from student ID
+    public static function generatePassword(string $studentId): string
+    {
+        return $studentId;
+    }
+
+    // Reset user credentials to defaults
+    public function resetCredentials(): void
+    {
+        $this->update([
+            'username' => self::generateUsername($this->student_id),
+            'password' => Hash::make(self::generatePassword($this->student_id))
+        ]);
+    }
+
+    // Toggle secretary role
+    public function toggleSecretaryRole(): void
+    {
+        $this->update([
+            'role' => $this->role === self::ROLE_SECRETARY ? self::ROLE_STUDENT : self::ROLE_SECRETARY
+        ]);
+    }
 
     // Add username as the authentication field
     public function username()

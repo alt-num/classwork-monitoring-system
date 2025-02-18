@@ -27,17 +27,10 @@
                 <label for="student_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Student ID</label>
                 <input type="text" name="student_id" id="student_id" value="{{ old('student_id', $user->student_id) }}" required
                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600">
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    Note: Changing the Student ID will affect the auto-generated username and password after reset.
+                </p>
                 @error('student_id')
-                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <!-- Username -->
-            <div class="mb-4">
-                <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Username</label>
-                <input type="text" name="username" id="username" value="{{ old('username', $user->username) }}" required
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600">
-                @error('username')
                     <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                 @enderror
             </div>
@@ -48,18 +41,6 @@
                 <input type="email" name="email" id="email" value="{{ old('email', $user->email) }}" required
                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600">
                 @error('email')
-                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <!-- Password -->
-            <div class="mb-4">
-                <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Password <span class="text-sm text-gray-500">(leave blank to keep current password)</span>
-                </label>
-                <input type="password" name="password" id="password"
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600">
-                @error('password')
                     <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                 @enderror
             </div>
@@ -105,7 +86,7 @@
                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600">
                     <option value="">Select Section</option>
                     @foreach(['A', 'B', 'C', 'D', 'E', 'F'] as $sectionName)
-                        <option value="{{ $sectionName }}" {{ old('section_id', $user->section->name) == $sectionName ? 'selected' : '' }}>
+                        <option value="{{ $sectionName }}" {{ old('section_id', optional($user->section)->name) == $sectionName ? 'selected' : '' }}>
                             Section {{ $sectionName }}
                         </option>
                     @endforeach

@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignId('classwork_activity_id')->constrained()->onDelete('cascade');
             $table->enum('status', ['present', 'late', 'absent'])->default('absent');
             $table->text('remarks')->nullable();
+            $table->foreignId('recorded_by')->constrained('users')->onDelete('cascade');
             $table->timestamps();
             $table->unique(['student_id', 'classwork_activity_id']);
         });
