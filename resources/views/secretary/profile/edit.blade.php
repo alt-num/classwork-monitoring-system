@@ -35,7 +35,7 @@
         </div>
 
         <!-- Editable Information -->
-        <form method="POST" action="{{ route('secretary.profile.update') }}" class="max-w-2xl">
+        <form method="POST" action="{{ route('secretary.profile.update') }}" class="max-w-2xl" data-no-csrf-handler>
             @csrf
             @method('PUT')
 

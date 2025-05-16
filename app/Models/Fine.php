@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Traits\HasCalendarYear;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class Fine extends Model
 {
-    use HasFactory;
+    use HasFactory, HasCalendarYear;
 
     protected $fillable = [
         'student_id',
@@ -24,6 +26,9 @@ class Fine extends Model
         'paid_at' => 'datetime',
         'amount' => 'decimal:2',
     ];
+
+    // Define which field to use for year filtering
+    protected $yearFilterField = 'created_at';
 
     public function student()
     {
@@ -43,5 +48,31 @@ class Fine extends Model
             'payment_reference' => $paymentReference,
             'notes' => $notes,
         ]);
+
+        // Clear the courses.fines cache with year
+        $this->clearFinesCache();
+    }
+
+    /**
+     * Clear the fines cache for all years
+     */
+    protected function clearFinesCache()
+    {
+        // Clear current year
+        Cache::forget($this->getFinesCacheKey());
+        
+        // Also clear previous year during January to ensure proper transitions
+        if (now()->month === 1) {
+            Cache::forget($this->getFinesCacheKey(now()->subYear()->year));
+        }
+    }
+
+    /**
+     * Get the cache key for fines summary
+     */
+    public static function getFinesCacheKey(?int $year = null): string
+    {
+        $year = $year ?? now()->year;
+        return "courses.fines.{$year}";
     }
 } 

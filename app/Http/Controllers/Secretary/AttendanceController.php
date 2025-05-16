@@ -9,15 +9,27 @@ use App\Models\ClassworkActivity;
 use App\Models\Fine;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 class AttendanceController extends Controller
 {
-    public function create(ClassworkActivity $activity)
+    public function create(ClassworkActivity $activity, Request $request)
     {
-        // Get students from the secretary's section
-        $students = User::where('role', User::ROLE_STUDENT)
-            ->where('section_id', auth()->user()->section_id)
-            ->get();
+        $query = User::where('role', User::ROLE_STUDENT)
+            ->where('section_id', auth()->user()->section_id);
+
+        // Apply search if provided
+        if ($request->filled('search')) {
+            $searchTerm = $request->search;
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('name', 'like', "%{$searchTerm}%")
+                  ->orWhere('student_id', 'like', "%{$searchTerm}%");
+            });
+        }
+
+        $students = $query->orderBy('name')
+            ->paginate(10)
+            ->withQueryString();
 
         return view('secretary.attendance.create', compact('activity', 'students'));
     }
@@ -26,45 +38,42 @@ class AttendanceController extends Controller
     {
         $request->validate([
             'attendance' => ['required', 'array'],
-            'attendance.*' => ['required', 'in:present,late,absent'],
+            'attendance.*' => ['required', 'in:present,absent'],
         ]);
 
-        foreach ($request->attendance as $studentId => $status) {
-            // Find existing record or create new one
-            $attendance = AttendanceRecord::updateOrCreate(
-                [
-                    'student_id' => $studentId,
-                    'classwork_activity_id' => $activity->id,
-                ],
-                [
-                    'status' => $status,
-                    'recorded_by' => auth()->id(),
-                ]
-            );
-
-            // Handle fines
-            $fine = null;
-            if ($status === 'late' || $status === 'absent') {
-                $fine = 20; // Fine amount for both late and absent
-            }
-
-            if ($fine) {
-                // Update or create fine
-                Fine::updateOrCreate(
-                    [
-                        'attendance_record_id' => $attendance->id,
-                    ],
+        DB::transaction(function () use ($request, $activity) {
+            foreach ($request->attendance as $studentId => $status) {
+                // Find existing record or create new one
+                $attendance = AttendanceRecord::updateOrCreate(
                     [
                         'student_id' => $studentId,
-                        'amount' => $fine,
-                        'is_paid' => false,
+                        'classwork_activity_id' => $activity->id,
+                    ],
+                    [
+                        'status' => $status,
+                        'recorded_by' => auth()->id(),
                     ]
                 );
-            } else {
-                // If status changed to present, remove any existing fine
-                Fine::where('attendance_record_id', $attendance->id)->delete();
+
+                // Handle fines
+                if ($status === 'absent') {
+                    // Create or update fine for absent students
+                    Fine::updateOrCreate(
+                        [
+                            'attendance_record_id' => $attendance->id,
+                        ],
+                        [
+                            'student_id' => $studentId,
+                            'amount' => 20, // Fine amount for absent
+                            'is_paid' => false,
+                        ]
+                    );
+                } else {
+                    // If status changed to present, remove any existing fine
+                    Fine::where('attendance_record_id', $attendance->id)->delete();
+                }
             }
-        }
+        });
 
         return redirect()->route('secretary.dashboard')
             ->with('success', 'Attendance has been updated successfully.');
@@ -73,11 +82,15 @@ class AttendanceController extends Controller
     public function report(Request $request)
     {
         $query = AttendanceRecord::query()
+            ->whereHas('classworkActivity', function($q) {
+                $q->currentYear();
+            })
             ->whereHas('student', function($q) {
                 $q->where('section_id', auth()->user()->section_id);
             })
             ->with(['student', 'classworkActivity', 'fine']);
 
+        // Apply date filters
         if ($request->filled('start_date')) {
             $query->whereDate('created_at', '>=', $request->start_date);
         }
@@ -86,11 +99,27 @@ class AttendanceController extends Controller
             $query->whereDate('created_at', '<=', $request->end_date);
         }
 
+        // Apply student filter
         if ($request->filled('student')) {
             $query->where('student_id', $request->student);
         }
 
-        $records = $query->latest()->paginate(15);
+        // Apply search if provided
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->whereHas('student', function($sq) use ($search) {
+                    $sq->where('name', 'LIKE', "%{$search}%")
+                        ->orWhere('student_id', 'LIKE', "%{$search}%");
+                })
+                ->orWhereHas('classworkActivity', function($sq) use ($search) {
+                    $sq->where('title', 'LIKE', "%{$search}%");
+                });
+            });
+        }
+
+        $records = $query->latest()->paginate(15)->withQueryString();
+        
         $students = User::where('role', User::ROLE_STUDENT)
             ->where('section_id', auth()->user()->section_id)
             ->get();
@@ -98,14 +127,29 @@ class AttendanceController extends Controller
         return view('secretary.attendance.report', compact('records', 'students'));
     }
 
-    public function fines()
+    public function fines(Request $request)
     {
-        $fines = Fine::whereHas('student', function($query) {
+        $query = Fine::query()
+            ->currentYear()
+            ->whereHas('student', function($query) {
                 $query->where('section_id', auth()->user()->section_id);
             })
-            ->with(['student', 'attendanceRecord.classworkActivity'])
-            ->latest()
-            ->paginate(15);
+            ->with(['student', 'attendanceRecord.classworkActivity']);
+
+        // Apply search before pagination
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->whereHas('student', function($query) use ($search) {
+                $query->where('name', 'LIKE', "%{$search}%")
+                    ->orWhere('student_id', 'LIKE', "%{$search}%")
+                    ->orWhere('email', 'LIKE', "%{$search}%");
+            })
+            ->orWhereHas('attendanceRecord.classworkActivity', function($query) use ($search) {
+                $query->where('title', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $fines = $query->latest()->paginate(15)->withQueryString();
 
         return view('secretary.attendance.fines', compact('fines'));
     }

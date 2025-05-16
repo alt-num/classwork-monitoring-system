@@ -11,6 +11,14 @@
         <!-- Filters -->
         <form method="GET" action="{{ route('secretary.attendance.report') }}" class="mb-6 bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Search -->
+                <div class="md:col-span-3">
+                    <label for="search" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Search</label>
+                    <input type="text" name="search" id="search" value="{{ request('search') }}"
+                        placeholder="Search by student name, ID, or activity title..."
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-600 dark:border-gray-500">
+                </div>
+
                 <div>
                     <label for="start_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Start Date</label>
                     <input type="date" name="start_date" id="start_date" value="{{ request('start_date') }}"
@@ -34,10 +42,13 @@
                     </select>
                 </div>
             </div>
-            <div class="mt-4 flex justify-end">
+            <div class="mt-4 flex justify-end space-x-3">
+                <a href="{{ route('secretary.attendance.report') }}" class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">
+                    Clear Filters
+                </a>
                 <button type="submit"
                     class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                    Filter Records
+                    Apply Filters
                 </button>
             </div>
         </form>
@@ -83,8 +94,6 @@
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                                     @if($record->status === 'present')
                                         bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200
-                                    @elseif($record->status === 'late')
-                                        bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200
                                     @else
                                         bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200
                                     @endif">

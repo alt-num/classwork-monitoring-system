@@ -25,14 +25,22 @@ class CourseSeeder extends Seeder
                 'description' => 'A program that focuses on the theory and practice of computer science.',
             ],
             [
-                'code' => 'BSCE',
-                'name' => 'Bachelor of Science in Computer Engineering',
-                'description' => 'A program that combines computer science and electronic engineering.',
+                'code' => 'ACT',
+                'name' => 'Associate in Computer Technology',
+                'description' => 'A program focused on computer technology fundamentals and applications.',
+            ],
+            [
+                'code' => 'BSEMC',
+                'name' => 'Bachelor of Science in Entertainment and Multimedia Computing',
+                'description' => 'A program that combines multimedia, entertainment, and computing technologies.',
             ],
         ];
 
         foreach ($courses as $course) {
-            Course::create($course);
+            Course::firstOrCreate(
+                ['code' => $course['code']],
+                $course
+            );
         }
     }
 }

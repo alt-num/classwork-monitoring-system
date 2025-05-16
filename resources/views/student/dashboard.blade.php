@@ -3,10 +3,18 @@
 @section('content')
 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
     <div class="p-6 text-gray-900 dark:text-gray-100">
+        <!-- Header with Navigation -->
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h2 class="text-2xl font-bold">Dashboard</h2>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Welcome back, {{ $student->name }}</p>
+            </div>
+        </div>
+
+        <!-- Student Information -->
         <div class="mb-8">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-2xl font-bold">Student Information</h2>
-                <a href="{{ route('student.profile.edit') }}" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Edit Profile</a>
             </div>
             <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -53,8 +61,11 @@
             </div>
         </div>
         
+        <!-- Recent Activities -->
         <div class="mb-8">
-            <h3 class="text-xl font-semibold mb-4">Recent Activities</h3>
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold">Recent Activities ({{ now()->year }})</h3>
+            </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
                     <thead class="bg-gray-50 dark:bg-gray-700">
@@ -85,9 +96,9 @@
                                         $status = $attendanceRecord ? ucfirst($attendanceRecord->status) : ($activity->due_date->isPast() ? 'Overdue' : 'Pending');
                                         $statusColor = match($status) {
                                             'Present' => 'green',
-                                            'Late' => 'yellow',
                                             'Absent' => 'red',
                                             'Overdue' => 'red',
+                                            'Organizer' => 'blue',
                                             default => 'yellow'
                                         };
                                     @endphp
@@ -95,9 +106,9 @@
                                         {{ $status }}
                                     </span>
                                     @if($attendanceRecord && $attendanceRecord->fine)
-                                        <div class="text-sm text-red-600 dark:text-red-400 mt-1">
+                                        <div class="text-sm {{ $attendanceRecord->fine->is_paid ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }} mt-1">
                                             Fine: ₱{{ number_format($attendanceRecord->fine->amount, 2) }}
-                                            ({{ $attendanceRecord->fine->is_paid ? 'Paid' : 'Unpaid' }})
+                                            <span class="font-medium">({{ $attendanceRecord->fine->is_paid ? 'Paid' : 'Unpaid' }})</span>
                                         </div>
                                     @endif
                                 </td>
@@ -112,11 +123,6 @@
                     </tbody>
                 </table>
             </div>
-            @if($activities->hasPages())
-                <div class="mt-4">
-                    {{ $activities->links() }}
-                </div>
-            @endif
         </div>
     </div>
 </div>

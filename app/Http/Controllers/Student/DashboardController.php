@@ -17,11 +17,13 @@ class DashboardController extends Controller
         $activities = ClassworkActivity::whereHas('section', function($query) use ($student) {
             $query->where('id', $student->section_id);
         })
+        ->currentYear()
         ->with(['secretary', 'section.course', 'attendanceRecords' => function($query) use ($student) {
             $query->where('student_id', $student->id)->with('fine');
         }])
         ->latest()
-        ->paginate(10);
+        ->take(5)
+        ->get();
 
         // Get attendance statistics
         $totalAttendance = $student->attendanceRecords()->count();

@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Traits\HasCalendarYear;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class ClassworkActivity extends Model
 {
-    use HasFactory;
+    use HasFactory, HasCalendarYear;
 
     protected $fillable = [
         'title',
@@ -21,6 +22,9 @@ class ClassworkActivity extends Model
     protected $casts = [
         'due_date' => 'datetime',
     ];
+
+    // Define which field to use for year filtering
+    protected $yearFilterField = 'due_date';
 
     // Relationships
     public function secretary()

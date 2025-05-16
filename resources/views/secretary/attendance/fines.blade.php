@@ -8,6 +8,29 @@
             <a href="{{ route('secretary.dashboard') }}" class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">Back to Dashboard</a>
         </div>
 
+        <!-- Search Bar -->
+        <form method="GET" action="{{ route('secretary.attendance.fines') }}" class="mb-4">
+            <div class="flex-1">
+                <label for="search" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Search Student Fines</label>
+                <div class="mt-1 flex rounded-md shadow-sm">
+                    <input type="text" 
+                        name="search"
+                        id="search"
+                        value="{{ request('search') }}"
+                        placeholder="Search by name, student ID, or activity..."
+                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600">
+                    <button type="submit" class="ml-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Search
+                    </button>
+                    @if(request('search'))
+                        <a href="{{ route('secretary.attendance.fines') }}" class="ml-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                            Clear
+                        </a>
+                    @endif
+                </div>
+            </div>
+        </form>
+
         <!-- Fines Table -->
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
@@ -61,7 +84,7 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 @if(!$fine->is_paid)
-                                    <form method="POST" action="{{ route('secretary.attendance.mark-fine-paid', $fine) }}" class="inline">
+                                    <form method="POST" action="{{ route('secretary.attendance.mark-fine-paid', $fine) }}" class="inline" data-no-csrf-handler>
                                         @csrf
                                         <button type="submit" class="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300">
                                             Mark as Paid

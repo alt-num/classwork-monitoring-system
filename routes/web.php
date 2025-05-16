@@ -14,10 +14,32 @@ use App\Http\Middleware\SecretaryMiddleware;
 use App\Http\Middleware\StudentMiddleware;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Secretary\AttendanceController;
+use App\Models\Course;
+use App\Models\Fine;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 // Public routes
 Route::get('/', function () {
-    return view('welcome');
+    // Cache the fines data for 1 hour with year-based key
+    $coursesFines = Cache::remember(Fine::getFinesCacheKey(), 3600, function () {
+        $currentYear = now()->year;
+        return Course::select([
+                'courses.name as course_name',
+                'courses.code as course_code',
+                DB::raw('COUNT(CASE WHEN users.role IN ("student", "secretary") THEN users.id END) as total_students'),
+                DB::raw("COALESCE(SUM(CASE WHEN fines.is_paid = 0 AND strftime('%Y', fines.created_at) = '{$currentYear}' THEN fines.amount ELSE 0 END), 0) as total_unpaid"),
+                DB::raw("COALESCE(SUM(CASE WHEN fines.is_paid = 1 AND strftime('%Y', fines.created_at) = '{$currentYear}' THEN fines.amount ELSE 0 END), 0) as total_paid"),
+                DB::raw("COALESCE(SUM(CASE WHEN strftime('%Y', fines.created_at) = '{$currentYear}' THEN fines.amount ELSE 0 END), 0) as total_amount")
+            ])
+            ->leftJoin('users', 'courses.id', '=', 'users.course_id')
+            ->leftJoin('fines', 'users.id', '=', 'fines.student_id')
+            ->groupBy('courses.id', 'courses.name', 'courses.code')
+            ->orderBy('courses.name')
+            ->get();
+    });
+
+    return view('welcome', compact('coursesFines'));
 });
 
 // Authentication routes
@@ -69,6 +91,7 @@ Route::middleware('auth')->group(function () {
     // Student routes
     Route::middleware(StudentMiddleware::class)->prefix('student')->name('student.')->group(function () {
         Route::get('/dashboard', [StudentDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/activities', [App\Http\Controllers\Student\ActivityController::class, 'index'])->name('activities.index');
         Route::get('/profile', [StudentProfileController::class, 'edit'])->name('profile.edit');
         Route::put('/profile', [StudentProfileController::class, 'update'])->name('profile.update');
     });

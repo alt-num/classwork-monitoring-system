@@ -4,16 +4,17 @@ namespace App\Http\Controllers\Secretary;
 
 use App\Http\Controllers\Controller;
 use App\Models\ClassworkActivity;
-use App\Models\Course;
-use App\Models\Section;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ActivityController extends Controller
 {
     public function index()
     {
         $activities = ClassworkActivity::where('secretary_id', auth()->id())
-            ->with(['course', 'section'])
+            ->currentYear()
+            ->with(['section.course', 'attendanceRecords'])
             ->latest()
             ->paginate(10);
 
@@ -22,11 +23,7 @@ class ActivityController extends Controller
 
     public function create()
     {
-        $user = auth()->user();
-        return view('secretary.activities.create', [
-            'course' => $user->course,
-            'section' => $user->section,
-        ]);
+        return view('secretary.activities.create');
     }
 
     public function store(Request $request)
@@ -34,45 +31,62 @@ class ActivityController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string'],
-            'due_date' => ['required', 'date', 'after:today'],
+            'due_date' => ['required', 'date'],
         ]);
 
         $user = auth()->user();
-        $validated['secretary_id'] = $user->id;
-        $validated['course_id'] = $user->course_id;
-        $validated['section_id'] = $user->section_id;
 
-        ClassworkActivity::create($validated);
+        // Start a database transaction
+        DB::beginTransaction();
 
-        return redirect()->route('secretary.activities.index')
-            ->with('success', 'Activity created successfully.');
+        try {
+            $activity = ClassworkActivity::create([
+                'title' => $validated['title'],
+                'description' => $validated['description'],
+                'due_date' => $validated['due_date'],
+                'secretary_id' => $user->id,
+                'section_id' => $user->section_id,
+                'course_id' => $user->course_id,
+                'year' => $user->year,
+            ]);
+
+            // Auto create an attendance record for the secretary as organizer
+            $activity->attendanceRecords()->create([
+                'student_id' => $user->id,
+                'status' => 'organizer',
+                'recorded_by' => $user->id,
+                'remarks' => 'Activity organizer'
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('secretary.activities.index')
+                ->with('success', 'Activity created successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
     }
 
     public function edit(ClassworkActivity $activity)
     {
-        // Check if the activity belongs to the current secretary
         if ($activity->secretary_id !== auth()->id()) {
-            abort(403, 'Unauthorized action.');
+            abort(403);
         }
 
-        return view('secretary.activities.edit', [
-            'activity' => $activity,
-            'course' => auth()->user()->course,
-            'section' => auth()->user()->section,
-        ]);
+        return view('secretary.activities.edit', compact('activity'));
     }
 
     public function update(Request $request, ClassworkActivity $activity)
     {
-        // Check if the activity belongs to the current secretary
         if ($activity->secretary_id !== auth()->id()) {
-            abort(403, 'Unauthorized action.');
+            abort(403);
         }
 
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string'],
-            'due_date' => ['required', 'date', 'after:today'],
+            'due_date' => ['required', 'date'],
         ]);
 
         $activity->update($validated);
@@ -83,9 +97,8 @@ class ActivityController extends Controller
 
     public function destroy(ClassworkActivity $activity)
     {
-        // Check if the activity belongs to the current secretary
         if ($activity->secretary_id !== auth()->id()) {
-            abort(403, 'Unauthorized action.');
+            abort(403);
         }
 
         $activity->delete();

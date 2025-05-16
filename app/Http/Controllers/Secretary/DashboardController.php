@@ -14,40 +14,46 @@ class DashboardController extends Controller
     {
         $secretary = auth()->user();
         
-        // Get students from secretary's assigned section
-        $students = User::where('role', User::ROLE_STUDENT)
+        // Get students and secretary from the assigned section
+        $students = User::whereIn('role', [User::ROLE_STUDENT, User::ROLE_SECRETARY])
             ->where('section_id', $secretary->section_id)
             ->with(['course', 'section'])
             ->get();
 
-        // Get activities created by this secretary
+        // Get activities created by this secretary for current year
         $recentActivities = ClassworkActivity::where('secretary_id', $secretary->id)
+            ->currentYear()
             ->with(['attendanceRecords', 'section.course'])
             ->latest()
             ->take(5)
             ->get();
 
-        // Calculate statistics
+        // Calculate statistics for current year
         $totalStudents = $students->count();
-        $totalActivities = ClassworkActivity::where('secretary_id', $secretary->id)->count();
+        $totalActivities = ClassworkActivity::where('secretary_id', $secretary->id)
+            ->currentYear()
+            ->count();
 
-        // Calculate fines for the section
+        // Calculate fines for the section in current year
         $pendingFines = Fine::whereHas('student', function($query) use ($secretary) {
                 $query->where('section_id', $secretary->section_id);
             })
+            ->currentYear()
             ->where('is_paid', false)
             ->sum('amount');
 
         $collectedFines = Fine::whereHas('student', function($query) use ($secretary) {
                 $query->where('section_id', $secretary->section_id);
             })
+            ->currentYear()
             ->where('is_paid', true)
             ->sum('amount');
 
-        // Get recent unpaid fines
+        // Get recent unpaid fines for current year
         $recentFines = Fine::whereHas('student', function($query) use ($secretary) {
                 $query->where('section_id', $secretary->section_id);
             })
+            ->currentYear()
             ->where('is_paid', false)
             ->with(['student', 'attendanceRecord.classworkActivity'])
             ->latest()

@@ -5,7 +5,6 @@
     <div class="p-6 text-gray-900 dark:text-gray-100">
         <div class="flex justify-between items-center mb-4">
             <h2 class="text-2xl font-bold">Secretary Dashboard</h2>
-            <a href="{{ route('secretary.profile.edit') }}" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Edit Profile</a>
         </div>
         
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
@@ -52,7 +51,12 @@
 
         <!-- Recent Activities -->
         <div class="mb-8">
-            <h3 class="text-xl font-semibold mb-4">Recent Activities</h3>
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center gap-2">
+                    <h3 class="text-xl font-semibold">Recent Activities ({{ now()->year }})</h3>
+                </div>
+                <span class="text-sm text-gray-600 dark:text-gray-400">{{ now()->format('F d, Y') }}</span>
+            </div>
             <div class="bg-white dark:bg-gray-700 rounded-lg shadow overflow-hidden">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
                     <thead class="bg-gray-50 dark:bg-gray-800">
@@ -76,7 +80,7 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm text-gray-900 dark:text-gray-100">
-                                    Present: {{ $activity->attendanceRecords->where('status', 'present')->count() }}
+                                    Present: {{ $activity->attendanceRecords->whereIn('status', ['present', 'organizer'])->count() }}
                                 </div>
                                 <div class="text-sm text-red-600 dark:text-red-400">
                                     Absent: {{ $activity->attendanceRecords->where('status', 'absent')->count() }}
@@ -109,7 +113,12 @@
 
         <!-- Unpaid Fines -->
         <div>
-            <h3 class="text-xl font-semibold mb-4">Recent Unpaid Fines</h3>
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center gap-2">
+                    <h3 class="text-xl font-semibold">Recent Unpaid Fines ({{ now()->year }})</h3>
+                </div>
+                <span class="text-sm text-gray-600 dark:text-gray-400">{{ now()->format('F d, Y') }}</span>
+            </div>
             <div class="bg-white dark:bg-gray-700 rounded-lg shadow overflow-hidden">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
                     <thead class="bg-gray-50 dark:bg-gray-800">
@@ -138,8 +147,7 @@
                                 <form action="{{ route('secretary.attendance.mark-fine-paid', $fine) }}" method="POST" class="inline">
                                     @csrf
                                     <button type="submit" 
-                                        class="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300"
-                                        onclick="return prompt('Enter payment reference:') && confirm('Are you sure you want to mark this fine as paid?')">
+                                        class="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300">
                                         Mark as Paid
                                     </button>
                                 </form>

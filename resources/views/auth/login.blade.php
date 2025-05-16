@@ -2,7 +2,24 @@
 
 @section('content')
 <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100 dark:bg-gray-900">
+    <!-- Logo/Title -->
+    <div>
+        <a href="/" class="text-3xl font-bold text-gray-900 dark:text-white">
+            {{ config('app.name', 'Classwork Monitoring System') }}
+        </a>
+    </div>
+
     <div class="w-full sm:max-w-md mt-6 px-6 py-4 bg-white dark:bg-gray-800 shadow-md overflow-hidden sm:rounded-lg">
+        <!-- Back to Home Link -->
+        <div class="mb-4">
+            <a href="{{ url('/') }}" class="inline-flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Back to Home
+            </a>
+        </div>
+
         <h2 class="text-2xl font-bold text-center text-gray-900 dark:text-gray-100 mb-6">
             Login to CMS
         </h2>

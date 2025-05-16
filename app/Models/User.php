@@ -8,6 +8,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 class User extends Authenticatable
 {
@@ -85,9 +86,41 @@ class User extends Authenticatable
     // Toggle secretary role
     public function toggleSecretaryRole(): void
     {
-        $this->update([
-            'role' => $this->role === self::ROLE_SECRETARY ? self::ROLE_STUDENT : self::ROLE_SECRETARY
-        ]);
+        // Start a database transaction
+        DB::beginTransaction();
+
+        try {
+            if ($this->role === self::ROLE_SECRETARY) {
+                // If removing secretary role, find the new secretary (if exists)
+                $newSecretary = User::where('role', self::ROLE_SECRETARY)
+                    ->where('course_id', $this->course_id)
+                    ->where('section_id', $this->section_id)
+                    ->where('year', $this->year)
+                    ->where('id', '!=', $this->id)
+                    ->first();
+
+                // Update activities to be owned by new secretary if exists
+                if ($newSecretary) {
+                    ClassworkActivity::where('secretary_id', $this->id)
+                        ->update(['secretary_id' => $newSecretary->id]);
+                }
+            } else {
+                // If becoming a secretary, take over existing activities for this section
+                ClassworkActivity::where('section_id', $this->section_id)
+                    ->where('course_id', $this->course_id)
+                    ->update(['secretary_id' => $this->id]);
+            }
+
+            // Toggle the role
+            $this->update([
+                'role' => $this->role === self::ROLE_SECRETARY ? self::ROLE_STUDENT : self::ROLE_SECRETARY
+            ]);
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
     }
 
     // Add username as the authentication field
