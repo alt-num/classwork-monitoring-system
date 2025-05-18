@@ -258,7 +258,7 @@ class UserController extends Controller
             }
 
             $oldRole = $user->role;
-            $user->toggleSecretaryRole();
+        $user->toggleSecretaryRole();
             $newRole = $user->role;
 
             $message = $newRole === User::ROLE_SECRETARY

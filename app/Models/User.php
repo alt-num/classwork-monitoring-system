@@ -112,9 +112,9 @@ class User extends Authenticatable
             }
 
             // Toggle the role
-            $this->update([
-                'role' => $this->role === self::ROLE_SECRETARY ? self::ROLE_STUDENT : self::ROLE_SECRETARY
-            ]);
+        $this->update([
+            'role' => $this->role === self::ROLE_SECRETARY ? self::ROLE_STUDENT : self::ROLE_SECRETARY
+        ]);
 
             DB::commit();
         } catch (\Exception $e) {

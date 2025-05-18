@@ -42,37 +42,37 @@ class AttendanceController extends Controller
         ]);
 
         DB::transaction(function () use ($request, $activity) {
-            foreach ($request->attendance as $studentId => $status) {
-                // Find existing record or create new one
-                $attendance = AttendanceRecord::updateOrCreate(
-                    [
-                        'student_id' => $studentId,
-                        'classwork_activity_id' => $activity->id,
-                    ],
-                    [
-                        'status' => $status,
-                        'recorded_by' => auth()->id(),
-                    ]
-                );
+        foreach ($request->attendance as $studentId => $status) {
+            // Find existing record or create new one
+            $attendance = AttendanceRecord::updateOrCreate(
+                [
+                    'student_id' => $studentId,
+                    'classwork_activity_id' => $activity->id,
+                ],
+                [
+                    'status' => $status,
+                    'recorded_by' => auth()->id(),
+                ]
+            );
 
-                // Handle fines
+            // Handle fines
                 if ($status === 'absent') {
                     // Create or update fine for absent students
-                    Fine::updateOrCreate(
-                        [
-                            'attendance_record_id' => $attendance->id,
-                        ],
-                        [
-                            'student_id' => $studentId,
+                Fine::updateOrCreate(
+                    [
+                        'attendance_record_id' => $attendance->id,
+                    ],
+                    [
+                        'student_id' => $studentId,
                             'amount' => 20, // Fine amount for absent
-                            'is_paid' => false,
-                        ]
-                    );
-                } else {
-                    // If status changed to present, remove any existing fine
-                    Fine::where('attendance_record_id', $attendance->id)->delete();
-                }
+                        'is_paid' => false,
+                    ]
+                );
+            } else {
+                // If status changed to present, remove any existing fine
+                Fine::where('attendance_record_id', $attendance->id)->delete();
             }
+        }
         });
 
         return redirect()->route('secretary.dashboard')

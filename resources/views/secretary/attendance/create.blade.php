@@ -11,20 +11,20 @@
             </a>
         </div>
 
-        <!-- Activity Information -->
-        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-6">
-            <h3 class="text-lg font-semibold mb-2">Activity Details</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">Title</p>
-                    <p class="text-base font-medium">{{ $activity->title }}</p>
-                </div>
-                <div>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">Due Date</p>
-                    <p class="text-base font-medium">{{ $activity->due_date->format('M d, Y h:i A') }}</p>
+            <!-- Activity Information -->
+            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-6">
+                <h3 class="text-lg font-semibold mb-2">Activity Details</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Title</p>
+                        <p class="text-base font-medium">{{ $activity->title }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Due Date</p>
+                        <p class="text-base font-medium">{{ $activity->due_date->format('M d, Y h:i A') }}</p>
+                    </div>
                 </div>
             </div>
-        </div>
 
         <!-- Search Form -->
         <form method="GET" action="{{ route('secretary.attendance.create', $activity) }}" class="mb-6">
@@ -35,7 +35,7 @@
                         name="search" 
                         id="search"
                         value="{{ request('search') }}"
-                        placeholder="Search by name or student ID..."
+                    placeholder="Search by name or student ID..."
                         class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600">
                     <button type="submit" 
                         class="ml-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
@@ -109,11 +109,11 @@
 
             @if($students->count() > 0)
                 <div class="flex justify-end mt-6">
-                    <button type="submit"
-                        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                        Record Attendance
-                    </button>
-                </div>
+                <button type="submit"
+                    class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                    Record Attendance
+                </button>
+            </div>
             @endif
         </form>
     </div>
