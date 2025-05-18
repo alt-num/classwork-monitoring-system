@@ -75,4 +75,19 @@ class Fine extends Model
         $year = $year ?? now()->year;
         return "courses.fines.{$year}";
     }
+
+    protected static function booted()
+    {
+        static::created(function ($fine) {
+            $fine->clearFinesCache();
+        });
+        static::deleted(function ($fine) {
+            $fine->clearFinesCache();
+        });
+        static::updated(function ($fine) {
+            if ($fine->wasChanged(['is_paid', 'amount', 'attendance_record_id', 'student_id'])) {
+                $fine->clearFinesCache();
+            }
+        });
+    }
 } 

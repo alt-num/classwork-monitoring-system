@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Secretary;
 use App\Http\Controllers\Controller;
 use App\Models\ClassworkActivity;
 use App\Models\User;
+use App\Models\Fine;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 class ActivityController extends Controller
 {
@@ -102,6 +104,9 @@ class ActivityController extends Controller
         }
 
         $activity->delete();
+
+        // Clear the fines cache after deleting an activity
+        Cache::forget(Fine::getFinesCacheKey());
 
         return redirect()->route('secretary.activities.index')
             ->with('success', 'Activity deleted successfully.');

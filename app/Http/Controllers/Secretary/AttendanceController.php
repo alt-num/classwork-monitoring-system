@@ -27,9 +27,7 @@ class AttendanceController extends Controller
             });
         }
 
-        $students = $query->orderBy('name')
-            ->paginate(10)
-            ->withQueryString();
+        $students = $query->orderBy('name')->get();
 
         return view('secretary.attendance.create', compact('activity', 'students'));
     }

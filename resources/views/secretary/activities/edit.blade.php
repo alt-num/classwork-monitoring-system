@@ -66,16 +66,6 @@
                 </button>
             </div>
         </form>
-
-        <form method="POST" action="{{ route('secretary.activities.destroy', $activity) }}" class="inline">
-            @csrf
-            @method('DELETE')
-            <button type="submit" 
-                onclick="return confirm('Are you sure you want to delete this activity? This action cannot be undone and will remove all associated attendance records and fines.')"
-                class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
-                Delete Activity
-            </button>
-        </form>
     </div>
 </div>
 @endsection 
